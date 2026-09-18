@@ -9,7 +9,7 @@ This is a **demonstration prototype**, not an operational or legally conclusive 
 
 ## Setup
 
-Python 3.10+ recommended.
+Python **3.12** is the intended runtime (matches Streamlit Community Cloud).
 
 ```bash
 python -m venv .venv
@@ -42,8 +42,9 @@ Community Cloud runs the app from a **public GitHub repository** (always free fo
 1. Push this project to GitHub (`app.py` at the repo root, plus `requirements.txt` and `data/`).
 2. Open [share.streamlit.io](https://share.streamlit.io) and sign in with GitHub.
 3. **Create app** → select the repository, branch `main`, and main file `app.py`.
-4. Set Python to **3.12** if asked. No secrets are required for this demo.
-5. Deploy. The app URL will be `https://<subdomain>.streamlit.app`.
+4. Open **Advanced settings** and set Python to **3.12** (required). Community Cloud does not reliably read `.python-version`. If the app was already created on 3.14, delete it and deploy again — Python cannot be changed in place.
+5. Main file: `app.py`. No secrets are required.
+6. Deploy. The app URL will be `https://<subdomain>.streamlit.app`.
 
 The demo uses synthetic SAR and illustrative AIS data; keep the on-screen DEMO DATA notice when sharing the link.
 

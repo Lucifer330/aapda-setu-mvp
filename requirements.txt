@@ -1,11 +1,15 @@
-streamlit==1.40.2
-folium==0.18.0
-streamlit-folium==0.24.0
-numpy==2.2.1
-pandas==2.2.3
-pillow==11.1.0
-matplotlib==3.10.0
-plotly==5.24.1
-branca==0.8.1
-jinja2==3.1.5
-python-dateutil==2.9.0.post0
+# AAPDA SETU — packages imported by app.py / src (plus their runtime stack).
+# Refuse source builds for C extensions: Streamlit Cloud has no zlib/dev headers.
+--only-binary=numpy,pillow,matplotlib,pandas
+
+# Intended Cloud runtime: Python 3.12 (Deploy → Advanced settings).
+# Lower bounds still resolve to cp314 wheels if Cloud stays on 3.14.
+# streamlit 1.52+ is the first release with official Python 3.14 support.
+streamlit>=1.52.0,<2
+numpy>=2.2.1,<3
+pandas>=2.2.3,<3
+pillow>=11.1.0,<13
+matplotlib>=3.10.0,<4
+plotly>=5.24.1,<8
+folium>=0.18.0,<1
+streamlit-folium>=0.24.0

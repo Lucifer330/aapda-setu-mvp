@@ -1,0 +1,4 @@
+# Streamlit Community Cloud does not always honor this file (Python is also
+# selected under Deploy → Advanced settings). Keep 3.12 so local, CI, and Cloud
+# stay on a version with widely available binary wheels.
+3.12
