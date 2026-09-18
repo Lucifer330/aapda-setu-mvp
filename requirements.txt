@@ -1,0 +1,11 @@
+streamlit==1.40.2
+folium==0.18.0
+streamlit-folium==0.24.0
+numpy==2.2.1
+pandas==2.2.3
+pillow==11.1.0
+matplotlib==3.10.0
+plotly==5.24.1
+branca==0.8.1
+jinja2==3.1.5
+python-dateutil==2.9.0.post0

@@ -1,0 +1,14 @@
+{
+  "current": {
+    "speed_ms": 0.4,
+    "direction_deg_toward": 210.0
+  },
+  "wind": {
+    "speed_ms": 6.0,
+    "direction_deg_toward": 240.0
+  },
+  "notes": "Both current and wind use 'toward' direction (oceanographic). This is documented again in src/drift_model.py.",
+  "spill_lat": 19.5,
+  "spill_lon": 71.0,
+  "detection_time_utc": "2026-01-14 06:32 UTC"
+}
