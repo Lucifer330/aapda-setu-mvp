@@ -8,11 +8,13 @@ Run from the project root:
 
 from __future__ import annotations
 
+import importlib.util
 import json
 import math
 import sys
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
+from types import ModuleType
 
 import numpy as np
 import pandas as pd
@@ -27,15 +29,35 @@ from branca.element import MacroElement
 from jinja2 import Template
 
 ROOT = Path(__file__).resolve().parent
-sys.path.insert(0, str(ROOT / "src"))
 
-from ais_correlation import (  # noqa: E402
-    evidence_level,
-    explain_candidate,
-    funnel_counts,
-    score_tracks,
-)
-from drift_model import backtrack  # noqa: E402
+
+def _load_src_module(mod_name: str) -> ModuleType:
+    """Load src/<mod>.py by absolute path.
+
+    Streamlit Community Cloud clones into /mount/src/<repo>. A project folder
+    named src/ plus a top-level `from ais_correlation import ...` is then
+    resolved against /mount/src, not this repository. File-based import avoids
+    that collision.
+    """
+    path = ROOT / "src" / f"{mod_name}.py"
+    if not path.is_file():
+        raise ImportError(f"Missing {path}")
+    spec = importlib.util.spec_from_file_location(f"aapda_{mod_name}", path)
+    if spec is None or spec.loader is None:
+        raise ImportError(f"Cannot load {path}")
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module
+    spec.loader.exec_module(module)
+    return module
+
+
+_ais_correlation = _load_src_module("ais_correlation")
+evidence_level = _ais_correlation.evidence_level
+explain_candidate = _ais_correlation.explain_candidate
+funnel_counts = _ais_correlation.funnel_counts
+score_tracks = _ais_correlation.score_tracks
+backtrack = _load_src_module("drift_model").backtrack
+sys.path.insert(0, str(ROOT / "src"))
 
 DATA = ROOT / "data"
 KM_PER_DEG_LAT = 111.32
@@ -150,8 +172,7 @@ def _ensure_sample_data() -> None:
     ]
     if all(p.exists() for p in needed):
         return
-    from data_gen import main as gen_main
-
+    gen_main = _load_src_module("data_gen").main
     gen_main()
 
 
