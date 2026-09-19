@@ -1,10 +1,15 @@
 """
 Evidence scoring: correlate AIS tracks with the reverse-drift source zone.
 
-Weights are equal (1/3 each) and ILLUSTRATIVE. A production system would
-calibrate them on labelled incidents (and add identity, AIS-gap, and
-oil-fingerprinting features). Scores support investigation ranking; they
-do not assign legal responsibility.
+This is the single source of truth for candidate scores.
+
+Overall (equal weights, illustrative):
+    overall = (spatial + temporal + course) / 3
+    High > 0.66, Medium > 0.33, otherwise Low.
+
+Diagnostic/behavioural score is computed for explainability and is NOT
+a fourth overall weight. Ranking supports investigation; it does not
+assign legal responsibility.
 """
 
 from __future__ import annotations
@@ -17,6 +22,8 @@ import numpy as np
 import pandas as pd
 
 KM_PER_DEG_LAT = 111.32
+HIGH_THRESHOLD = 0.66
+MEDIUM_THRESHOLD = 0.33
 
 
 def _to_utc(ts) -> datetime:
@@ -38,7 +45,6 @@ def _haversine_km(lat1, lon1, lat2, lon2) -> float:
 
 
 def _bearing_deg(lat1, lon1, lat2, lon2) -> float:
-    """Initial bearing from point 1 toward point 2, 0–360 clockwise from north."""
     p1, p2 = math.radians(lat1), math.radians(lat2)
     dlmb = math.radians(lon2 - lon1)
     x = math.sin(dlmb) * math.cos(p2)
@@ -48,7 +54,6 @@ def _bearing_deg(lat1, lon1, lat2, lon2) -> float:
 
 
 def _ang_diff(a: float, b: float) -> float:
-    """Smallest absolute difference between two headings in degrees."""
     d = abs(a - b) % 360.0
     return min(d, 360.0 - d)
 
@@ -60,14 +65,16 @@ def _overlap_hours(a0: datetime, a1: datetime, b0: datetime, b1: datetime) -> fl
 
 
 def evidence_level(score: float) -> str:
-    # High > 0.66, Medium in (0.33, 0.66], Low <= 0.33.
-    # Equality at 0.33 is treated as Low so a vessel that only scores on
-    # one of the three equal-weight components does not look like a candidate.
-    if score > 0.66:
+    """Single banding used for overall evidence and per-component labels."""
+    if score > HIGH_THRESHOLD:
         return "High"
-    if score > 0.33:
+    if score > MEDIUM_THRESHOLD:
         return "Medium"
     return "Low"
+
+
+def review_action(level: str) -> str:
+    return "Required" if level in ("High", "Medium") else "Optional"
 
 
 def score_tracks(
@@ -78,18 +85,8 @@ def score_tracks(
     spill_lon: float,
     detection_time: datetime,
     hours_back: float,
+    forward_uv_ms: tuple[float, float] = (0.0, 0.0),
 ) -> pd.DataFrame:
-    """
-    Compute spatial / temporal / course scores for each vessel.
-
-    Spatial: peak soft-membership of in-window points vs the source-zone
-             circle (1 inside the RMS radius, fading to 0 at 1.6× radius).
-    Temporal: overlap of in-theatre track times with
-              [detection - hours_back, detection] / hours_back.
-    Course: 1 - mean_angular_error/180 for in-window points near the zone,
-            where angular error is |vessel course − bearing to spill|.
-    Overall: mean of the three (equal weights — calibrate with real data).
-    """
     if detection_time.tzinfo is None:
         detection_time = detection_time.replace(tzinfo=timezone.utc)
 
@@ -97,6 +94,8 @@ def score_tracks(
     release_end = detection_time
     window_h = max(float(hours_back), 1e-6)
     c_lat, c_lon = source_centroid
+    u_fwd, v_fwd = forward_uv_ms
+    oil_toward = (math.degrees(math.atan2(u_fwd, v_fwd)) + 360.0) % 360.0
 
     rows = []
     for vessel_id, g in ais_df.groupby("vessel_id"):
@@ -109,9 +108,6 @@ def score_tracks(
         dists = np.array([_haversine_km(la, lo, c_lat, c_lon) for la, lo in zip(lats, lons)])
         in_window = np.array([(release_start <= t <= release_end) for t in times])
 
-        # Spatial: peak membership of in-window points (did the vessel actually
-        # enter the estimated source zone, not an average diluted by the rest
-        # of a long transit). Soft kernel fades to 0 at 1.6× RMS radius.
         if in_window.any():
             d_win = dists[in_window]
             fade = 1.6 * max(source_radius_km, 1e-6)
@@ -119,10 +115,6 @@ def score_tracks(
         else:
             spatial = 0.0
 
-        # Temporal: overlap of the track with the release window, but only
-        # using positions that are in the same theatre (~120 km of the slick).
-        # A vessel transiting Gujarat while the window is open should not get
-        # a full temporal score.
         dist_spill = np.array(
             [_haversine_km(la, lo, spill_lat, spill_lon) for la, lo in zip(lats, lons)]
         )
@@ -138,9 +130,7 @@ def score_tracks(
         if near.any():
             errs = []
             for la, lo, crs, is_near, t in zip(lats, lons, courses, near, times):
-                if not is_near:
-                    continue
-                if t < release_start or t > release_end:
+                if not is_near or t < release_start or t > release_end:
                     continue
                 brng = _bearing_deg(la, lo, spill_lat, spill_lon)
                 errs.append(_ang_diff(float(crs), brng))
@@ -149,10 +139,15 @@ def score_tracks(
         else:
             course_score = 0.0
 
-        # Equal weights — illustrative only; would be calibrated on real cases.
-        overall = (spatial + temporal + course_score) / 3.0
+        diag_errs = [
+            _ang_diff(float(crs), oil_toward)
+            for crs, t in zip(courses, times)
+            if release_start <= t <= release_end
+        ]
+        diagnostic = max(0.0, 1.0 - float(np.mean(diag_errs)) / 180.0) if diag_errs else 0.0
 
-        # Marker: AIS position closest in time to the midpoint of the release window.
+        overall = (spatial + temporal + course_score) / 3.0
+        level = evidence_level(overall)
         mid = release_start + (release_end - release_start) / 2
         idx = int(np.argmin([abs((t - mid).total_seconds()) for t in times]))
 
@@ -162,15 +157,58 @@ def score_tracks(
                 "spatial_score": round(spatial, 3),
                 "temporal_score": round(temporal, 3),
                 "course_score": round(course_score, 3),
+                "diagnostic_score": round(diagnostic, 3),
                 "overall_score": round(overall, 3),
-                "evidence_level": evidence_level(overall),
+                "evidence_level": level,
+                "investigation_review": review_action(level),
+                "in_time_window": bool(temporal > 0),
+                "spatially_compatible": bool(spatial > 0),
                 "marker_lat": float(lats[idx]),
                 "marker_lon": float(lons[idx]),
             }
         )
 
-    out = pd.DataFrame(rows).sort_values("overall_score", ascending=False).reset_index(drop=True)
-    return out
+    return pd.DataFrame(rows).sort_values("overall_score", ascending=False).reset_index(drop=True)
+
+
+def funnel_counts(scores: pd.DataFrame) -> dict:
+    n = int(len(scores))
+    return {
+        "tracks_in_region": n,
+        "in_time_window": int(scores["in_time_window"].sum()) if n else 0,
+        "spatially_compatible": int(scores["spatially_compatible"].sum()) if n else 0,
+        "candidate_vessels": int(scores["evidence_level"].isin(["High", "Medium"]).sum()) if n else 0,
+    }
+
+
+def explain_candidate(row: pd.Series) -> list[str]:
+    reasons = []
+    if row["spatial_score"] > HIGH_THRESHOLD:
+        reasons.append("Entered the probable source zone during the estimated source time window.")
+    elif row["spatial_score"] > MEDIUM_THRESHOLD:
+        reasons.append("Passed near the probable source zone (partial spatial compatibility).")
+    else:
+        reasons.append("Did not enter the probable source zone in this window.")
+
+    if row["temporal_score"] > HIGH_THRESHOLD:
+        reasons.append("AIS coverage overlaps most of the estimated source time window.")
+    elif row["temporal_score"] > MEDIUM_THRESHOLD:
+        reasons.append("Partial overlap with the estimated source time window.")
+    else:
+        reasons.append("Little or no presence in the estimated source time window.")
+
+    if row["course_score"] > HIGH_THRESHOLD:
+        reasons.append("Recorded heading is consistent with a path toward the observed slick.")
+    elif row["course_score"] > MEDIUM_THRESHOLD:
+        reasons.append("Heading is only partly aligned with a path toward the slick.")
+    else:
+        reasons.append("Heading is not aligned with a path toward the slick.")
+
+    reasons.append(
+        "Behavioural/diagnostic score compares heading with the scenario oil-drift "
+        "direction; it is not included in the overall score."
+    )
+    return reasons
 
 
 def closest_point_in_window(
@@ -178,7 +216,6 @@ def closest_point_in_window(
     detection_time: datetime,
     hours_back: float,
 ) -> Optional[pd.Series]:
-    """Return the track row whose timestamp is nearest the release-window midpoint."""
     if track.empty:
         return None
     if detection_time.tzinfo is None:
