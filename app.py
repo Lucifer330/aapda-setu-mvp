@@ -40,88 +40,90 @@ from drift_model import backtrack  # noqa: E402
 DATA = ROOT / "data"
 KM_PER_DEG_LAT = 111.32
 PRESET_HOURS = [3, 6, 8, 12, 24]
+NAV_ITEMS = ["Dashboard", "Incidents", "Vessels", "Analytics", "Evidence", "About"]
+INCIDENT_ID = "AS-DEMO-2026-0114"
 
 LEVEL_COLORS = {
-    "High": "#d4764e",
-    "Medium": "#c9a227",
-    "Low": "#7d8b99",
-}
-LEVEL_BG = {
-    "High": "#3a241c",
-    "Medium": "#2f2a16",
-    "Low": "#1b2834",
+    "High": "#c2410c",
+    "Medium": "#b45309",
+    "Low": "#64748b",
 }
 
 CSS = """
 <style>
-@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;500;600;700&display=swap');
 
-html, body, [class*="css"]  {
-    font-family: "IBM Plex Sans", sans-serif;
-}
-.stApp { background: #0b1c2c; }
-header[data-testid="stHeader"] { background: #0b1c2c; }
-.block-container { padding-top: 1rem; padding-bottom: 2rem; max-width: 1480px; }
+html, body, [class*="css"] { font-family: "Source Sans 3", "Segoe UI", sans-serif; }
+header[data-testid="stHeader"] { display: none; }
+.stApp { background: #F7F8FA; }
+.block-container { padding-top: 1.4rem; padding-bottom: 2.4rem; max-width: 1320px; }
 
-.as-top {
+.as-nav {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    padding: 10px 16px;
     display: flex;
     justify-content: space-between;
-    align-items: flex-start;
-    gap: 16px;
-    border-bottom: 1px solid #1e3a52;
-    padding-bottom: 12px;
-    margin-bottom: 14px;
+    align-items: center;
+    margin-bottom: 8px;
 }
-.as-brand { letter-spacing: 0.18em; font-size: 0.72rem; color: #7ad4cc; font-weight: 600; }
-.as-title { font-size: 1.55rem; font-weight: 700; color: #f4f8fb; margin: 2px 0 0 0; line-height: 1.2; }
-.as-sub { font-size: 0.92rem; color: #9bb0c3; margin-top: 4px; }
-.as-demo {
-    background: #12283c;
-    border: 1px solid #2aa9a1;
-    color: #d7f3f0;
-    padding: 8px 12px;
-    font-size: 0.78rem;
-    line-height: 1.35;
-    max-width: 340px;
+.as-brand { display: flex; align-items: center; gap: 10px; }
+.as-mark {
+    width: 28px; height: 28px; border-radius: 4px;
+    background: #1e3a5f; color: #fff; font-size: 11px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
 }
-.as-demo b { color: #7ad4cc; letter-spacing: 0.12em; font-size: 0.7rem; }
+.as-name { font-weight: 700; color: #111827; font-size: 1.02rem; line-height: 1.1; }
+.as-name span { display: block; font-weight: 400; color: #6b7280; font-size: 0.72rem; }
+.as-nav-right { display: flex; align-items: center; gap: 16px; font-size: 0.82rem; color: #4b5563; }
+.as-dot { width: 8px; height: 8px; border-radius: 50%; background: #16a34a; display: inline-block; margin-right: 6px; }
+.as-demo-chip {
+    display: inline-block; font-size: 0.7rem; font-weight: 600; letter-spacing: 0.06em;
+    color: #9a3412; background: #fff7ed; border: 1px solid #fdba74;
+    padding: 2px 8px; border-radius: 4px; margin-left: 8px;
+}
 
-.as-metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 12px 0 8px 0; }
+.as-h1 { font-size: 1.45rem; font-weight: 700; color: #111827; margin: 4px 0 0 0; }
+.as-sub { color: #4b5563; font-size: 0.95rem; margin: 4px 0 14px 0; max-width: 720px; }
+.as-h2 { font-size: 0.92rem; font-weight: 650; color: #111827; margin: 0 0 8px 0; }
+.as-meta { color: #6b7280; font-size: 0.8rem; }
+
+.as-metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 8px 0 16px 0; }
 .as-metric {
-    background: #12283c;
-    border: 1px solid #1e3a52;
-    padding: 10px 12px;
+    background: #fff; border: 1px solid #e5e7eb; border-radius: 6px;
+    box-shadow: 0 1px 2px rgba(16,24,40,0.04); padding: 12px 14px;
 }
-.as-metric .k { font-size: 0.68rem; letter-spacing: 0.12em; color: #7ad4cc; font-weight: 600; }
-.as-metric .v { font-size: 1.05rem; color: #f4f8fb; font-weight: 600; margin-top: 4px; }
-.as-metric .h { font-size: 0.75rem; color: #9bb0c3; margin-top: 2px; }
+.as-metric .k { font-size: 0.72rem; color: #6b7280; font-weight: 600; }
+.as-metric .v { font-size: 1.15rem; color: #111827; font-weight: 650; margin-top: 4px; }
+.as-metric .h { font-size: 0.75rem; color: #6b7280; margin-top: 3px; }
 
-.as-flow {
-    display: flex; flex-wrap: wrap; gap: 6px; align-items: center;
-    font-size: 0.72rem; letter-spacing: 0.08em; color: #9bb0c3;
-    margin: 6px 0 14px 0;
+.as-panel {
+    background: #fff; border: 1px solid #e5e7eb; border-radius: 6px;
+    box-shadow: 0 1px 2px rgba(16,24,40,0.04); padding: 14px 16px;
 }
+.as-kv { width: 100%; border-collapse: collapse; font-size: 0.86rem; }
+.as-kv td { padding: 7px 0; border-top: 1px solid #f3f4f6; vertical-align: top; }
+.as-kv td.k { color: #6b7280; width: 42%; }
+.as-kv td.v { color: #111827; }
+
+.as-flow { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin: 8px 0 16px 0; }
 .as-flow span {
-    background: #12283c; border: 1px solid #1e3a52; padding: 4px 8px; color: #d5e4ef;
+    background: #fff; border: 1px solid #e5e7eb; color: #374151;
+    font-size: 0.75rem; padding: 4px 8px; border-radius: 4px;
 }
-.as-flow .arr { background: none; border: none; color: #2aa9a1; padding: 0 2px; }
+.as-flow .arr { background: none; border: none; color: #9ca3af; padding: 0 2px; }
 
-.as-panel-label {
-    font-size: 0.72rem; letter-spacing: 0.14em; color: #7ad4cc; font-weight: 600;
-    margin-bottom: 6px;
+.as-banner {
+    background: #fffbeb; border: 1px solid #fde68a; color: #78350f;
+    font-size: 0.82rem; padding: 8px 12px; border-radius: 6px; margin-bottom: 14px;
 }
-.as-note { font-size: 0.78rem; color: #9bb0c3; }
-.as-report {
-    background: #12283c; border: 1px solid #1e3a52; padding: 16px 18px; margin-top: 8px;
-}
-.as-report h3 { margin: 0 0 10px 0; color: #f4f8fb; font-size: 1.05rem; }
-.as-report table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
-.as-report td { padding: 6px 8px; border-top: 1px solid #1e3a52; vertical-align: top; }
-.as-report td.k { color: #9bb0c3; width: 240px; }
-.as-report td.v { color: #e8eef4; }
-.as-foot { color: #8aa0b4; font-size: 0.8rem; margin-top: 18px; }
+.as-foot { color: #6b7280; font-size: 0.78rem; margin-top: 22px; }
+.as-badge-high { color: #9a3412; background: #fff7ed; border: 1px solid #fdba74; padding: 1px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 650; }
+.as-badge-med { color: #92400e; background: #fffbeb; border: 1px solid #fcd34d; padding: 1px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 650; }
+.as-badge-low { color: #4b5563; background: #f3f4f6; border: 1px solid #e5e7eb; padding: 1px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 650; }
 
-[data-testid="stSlider"] label { color: #9bb0c3 !important; }
+div[data-testid="stHorizontalBlock"] button { border-radius: 4px; }
 </style>
 """
 
@@ -184,11 +186,11 @@ def overlay_slick(spill: Image.Image, polygon_pixels: list) -> Image.Image:
     ax.imshow(gray, cmap="gray", origin="upper")
     xs = [p[0] for p in polygon_pixels] + [polygon_pixels[0][0]]
     ys = [p[1] for p in polygon_pixels] + [polygon_pixels[0][1]]
-    ax.plot(xs, ys, color="#d4764e", linewidth=2.2)
+    ax.plot(xs, ys, color="#c2410c", linewidth=2.2)
     ax.set_axis_off()
     fig.tight_layout(pad=0)
     bio = BytesIO()
-    fig.savefig(bio, format="png", bbox_inches="tight", pad_inches=0)
+    fig.savefig(bio, format="png", bbox_inches="tight", pad_inches=0, facecolor="white")
     plt.close(fig)
     bio.seek(0)
     return Image.open(bio).convert("RGB")
@@ -217,11 +219,6 @@ def environmental_consistency(
     detection_time: datetime,
     hours_back: float,
 ) -> float:
-    """
-    Alignment of the vessel's in-window heading with the oil-drift direction
-    implied by the scenario current + windage. Not a fourth overall-score
-    weight — a diagnostic that uses the same vectors as reverse backtracking.
-    """
     u, v = drift["forward_uv_ms"]
     oil_toward = (math.degrees(math.atan2(u, v)) + 360.0) % 360.0
     release_start = detection_time - timedelta(hours=float(hours_back))
@@ -245,16 +242,16 @@ class MapLegend(MacroElement):
             {% macro html(this, kwargs) %}
             <div style="
                 position: fixed; bottom: 28px; left: 28px; z-index: 9999;
-                background: rgba(11,28,44,0.92); color: #e8eef4;
-                border: 1px solid #1e3a52; padding: 10px 12px;
-                font-size: 12px; font-family: sans-serif;
-                line-height: 1.7;">
-                <div style="letter-spacing:0.12em;color:#7ad4cc;font-size:10px;">LEGEND</div>
-                <div><span style="color:#d4764e;">&#9632;</span> Detected Slick</div>
-                <div><span style="color:#5ec8c5;">&#9679;</span> Reverse Drift</div>
-                <div><span style="color:#7ad4cc;">&#9711;</span> Probable Source Zone</div>
-                <div><span style="color:#8aa0b4;">&#8212;</span> AIS Track</div>
-                <div><span style="color:#e8eef4;">&#9670;</span> Candidate Vessel</div>
+                background: rgba(255,255,255,0.94); color: #111827;
+                border: 1px solid #e5e7eb; padding: 10px 12px; border-radius: 6px;
+                font-size: 12px; font-family: 'Source Sans 3', sans-serif;
+                line-height: 1.7; box-shadow: 0 1px 2px rgba(16,24,40,0.08);">
+                <div style="font-weight:650;color:#6b7280;font-size:10px;letter-spacing:0.08em;">MAP LAYERS</div>
+                <div><span style="color:#c2410c;">&#9632;</span> Observed slick</div>
+                <div><span style="color:#0f766e;">&#9679;</span> Reverse drift</div>
+                <div><span style="color:#1d4ed8;">&#9711;</span> Probable source zone</div>
+                <div><span style="color:#64748b;">&#8212;</span> AIS track</div>
+                <div><span style="color:#1e3a5f;">&#9670;</span> Candidate vessel</div>
             </div>
             {% endmacro %}
             """
@@ -290,19 +287,19 @@ def build_map(
 
     folium.Polygon(
         locations=[[lat, lon] for lat, lon in poly_ll],
-        color="#d4764e",
+        color="#c2410c",
         weight=3,
         fill=True,
-        fill_color="#d4764e",
-        fill_opacity=0.28,
-        tooltip="Detected slick",
+        fill_color="#ea580c",
+        fill_opacity=0.30,
+        tooltip="Observed oil slick",
     ).add_to(m)
     folium.CircleMarker(
         location=[spill_lat, spill_lon],
         radius=6,
-        color="#f4f8fb",
+        color="#ffffff",
         fill=True,
-        fill_color="#d4764e",
+        fill_color="#c2410c",
         fill_opacity=1.0,
         tooltip="Spill location",
     ).add_to(m)
@@ -314,25 +311,25 @@ def build_map(
             radius=18,
             blur=15,
             min_opacity=0.28,
-            gradient={0.2: "#7ad4cc", 0.55: "#2aa9a1", 0.85: "#0e6b66"},
+            gradient={0.2: "#99f6e4", 0.55: "#14b8a6", 0.85: "#0f766e"},
             name="Reverse drift",
         ).add_to(m)
 
     folium.Circle(
         location=[centroid[0], centroid[1]],
         radius=radius_km * 1000.0,
-        color="#7ad4cc",
+        color="#1d4ed8",
         weight=2,
         fill=True,
-        fill_color="#2aa9a1",
-        fill_opacity=0.06,
+        fill_color="#1d4ed8",
+        fill_opacity=0.05,
         dash_array="6,6",
         tooltip=f"Probable source zone · ~{radius_km:.1f} km RMS radius",
     ).add_to(m)
     folium.CircleMarker(
         location=[centroid[0], centroid[1]],
         radius=5,
-        color="#7ad4cc",
+        color="#1d4ed8",
         fill=True,
         fill_opacity=1.0,
         tooltip="Source-zone centroid",
@@ -348,33 +345,34 @@ def build_map(
         g = g.sort_values("timestamp")
         level = level_by_id.get(vid, "Low")
         is_sel = vid == selected_vessel
-        color = "#f4f8fb" if is_sel else LEVEL_COLORS[level]
+        color = "#1e3a5f" if is_sel else LEVEL_COLORS[level]
         folium.PolyLine(
             locations=list(zip(g["lat"].tolist(), g["lon"].tolist())),
             color=color,
             weight=5 if is_sel else (3 if level == "High" else 2),
-            opacity=0.95 if is_sel else 0.85,
+            opacity=0.95 if is_sel else 0.82,
             tooltip=f"{vid} · {level}",
         ).add_to(m)
         ml, mo, ev, sc = marker_by_id[vid]
         folium.CircleMarker(
             location=[ml, mo],
             radius=9 if is_sel else 6,
-            color="#f4f8fb" if is_sel else color,
+            color="#ffffff" if is_sel else color,
             fill=True,
             fill_color=color,
             fill_opacity=0.95,
             popup=folium.Popup(
-                f"<b>{vid}</b><br>Evidence: {ev}<br>Overall: {sc:.3f}",
-                max_width=220,
+                f"<b>{vid}</b><br>Evidence level: {ev}<br>Overall: {sc:.3f}<br>For investigation review",
+                max_width=240,
             ),
         ).add_to(m)
         folium.Marker(
             location=[ml, mo],
             icon=folium.DivIcon(
                 html=(
-                    f'<div style="font-size:11px;color:#f4f8fb;font-weight:600;'
-                    f'text-shadow:0 0 4px #0b1c2c;white-space:nowrap;">{vid}</div>'
+                    f'<div style="font-size:11px;color:#111827;font-weight:650;'
+                    f"background:#fff;border:1px solid #e5e7eb;padding:1px 4px;"
+                    f'border-radius:3px;white-space:nowrap;">{vid}</div>'
                 )
             ),
         ).add_to(m)
@@ -385,21 +383,462 @@ def build_map(
 
 
 def evidence_badge(level: str) -> str:
-    color = {"High": "#d4764e", "Medium": "#c9a227", "Low": "#7d8b99"}[level]
-    return (
-        f"<span style='display:inline-block;min-width:64px;text-align:center;"
-        f"border:1px solid {color};color:{color};padding:1px 8px;font-size:0.78rem;"
-        f"letter-spacing:0.08em;'>{level.upper()}</span>"
+    cls = {"High": "as-badge-high", "Medium": "as-badge-med", "Low": "as-badge-low"}[level]
+    return f"<span class='{cls}'>{level}</span>"
+
+
+def render_nav(page: str) -> str:
+    brand, status = st.columns([1.4, 1.1])
+    with brand:
+        st.markdown(
+            "<div style='font-weight:700;font-size:1.05rem;color:#111827;'>Aapda Setu</div>"
+            "<div style='font-size:0.8rem;color:#6b7280;'>Marine spill investigation</div>",
+            unsafe_allow_html=True,
+        )
+    with status:
+        st.markdown(
+            "<div style='text-align:right;font-size:0.82rem;color:#4b5563;padding-top:4px;'>"
+            "<span style='display:inline-block;width:8px;height:8px;background:#16a34a;"
+            "border-radius:50%;margin-right:6px;vertical-align:middle;'></span>"
+            "System status · operational (demo)<br/>Analyst · demo session</div>",
+            unsafe_allow_html=True,
+        )
+    cols = st.columns(len(NAV_ITEMS))
+    chosen = page
+    for col, name in zip(cols, NAV_ITEMS):
+        if col.button(
+            name,
+            key=f"nav_{name}",
+            use_container_width=True,
+            type="primary" if name == page else "secondary",
+        ):
+            chosen = name
+    if chosen != page:
+        st.session_state.page = chosen
+        st.rerun()
+    return page
+
+
+def render_report(ctx: dict) -> None:
+    scores = ctx["scores"]
+    ids = ctx["ids"]
+    high_ids = ", ".join(scores.loc[scores["evidence_level"] == "High", "vessel_id"].tolist()) or "None"
+    med_ids = ", ".join(scores.loc[scores["evidence_level"] == "Medium", "vessel_id"].tolist()) or "None"
+    summary_bits = []
+    for _, r in scores.head(3).iterrows():
+        summary_bits.append(
+            f"{r['vessel_id']} · {r['evidence_level']} "
+            f"(spatial {r['spatial_score']:.3f}, temporal {r['temporal_score']:.3f}, "
+            f"course {r['course_score']:.3f}, overall {r['overall_score']:.3f})"
+        )
+    st.markdown(
+        f"""
+        <div class="as-panel">
+          <div class="as-h2">Investigation report</div>
+          <table class="as-kv">
+            <tr><td class="k">Incident</td><td class="v">{INCIDENT_ID} · Arabian Sea demonstration case (SIH26143)</td></tr>
+            <tr><td class="k">Detection time</td><td class="v">{ctx['env']['detection_time_utc']}</td></tr>
+            <tr><td class="k">Spill location</td><td class="v">{fmt_ll(ctx['spill_lat'], ctx['spill_lon'])}</td></tr>
+            <tr><td class="k">Spill confidence</td><td class="v">N/A (static sample mask — not model-inferred)</td></tr>
+            <tr><td class="k">Backtracking window</td><td class="v">{ctx['hours_back']} hours</td></tr>
+            <tr><td class="k">Probable source zone</td><td class="v">{ctx['zone_txt']} (ensemble centroid and RMS radius)</td></tr>
+            <tr><td class="k">Estimated source time window</td><td class="v">{ctx['window_txt']}</td></tr>
+            <tr><td class="k">Candidate vessels</td>
+                <td class="v">High: {high_ids}<br/>Medium: {med_ids}<br/>Tracks ranked: {', '.join(ids)}</td></tr>
+            <tr><td class="k">Evidence summary</td><td class="v">{"<br/>".join(summary_bits)}</td></tr>
+            <tr><td class="k">Investigation status</td>
+                <td class="v">Open — candidate generation complete; analyst review required</td></tr>
+          </table>
+          <p class="as-meta" style="margin:12px 0 0 0;">
+            Candidate generation supports investigation; final determination remains with the human analyst.
+          </p>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+def render_backtrack_controls() -> bool:
+    st.markdown('<div class="as-h2">Backtracking window</div>', unsafe_allow_html=True)
+    preset = st.columns(len(PRESET_HOURS) + 2)
+    for h, col in zip(PRESET_HOURS, preset):
+        if col.button(
+            f"{h}h",
+            key=f"preset_{h}",
+            use_container_width=True,
+            type="primary" if st.session_state.hours_back == h else "secondary",
+        ):
+            st.session_state.hours_back = h
+            st.rerun()
+    with preset[-2]:
+        st.slider("Hours", min_value=3, max_value=24, step=1, key="hours_back", label_visibility="collapsed")
+    with preset[-1]:
+        return st.checkbox("Particle heatmap", value=True)
+
+
+def page_dashboard(ctx: dict) -> None:
+    st.markdown('<div class="as-h1">Marine Oil Spill Intelligence</div>', unsafe_allow_html=True)
+    st.markdown(
+        '<p class="as-sub">Detect spills, reconstruct probable origin, and correlate vessel movements for investigation.</p>',
+        unsafe_allow_html=True,
+    )
+    st.markdown(
+        '<div class="as-banner"><span class="as-demo-chip">DEMO / SYNTHETIC</span> '
+        "This workspace uses a synthetic SAR scene and illustrative AIS tracks. "
+        "It is not a live operational feed.</div>",
+        unsafe_allow_html=True,
+    )
+    n_cand = ctx["n_high"] + ctx["n_med"]
+    st.markdown(
+        f"""
+        <div class="as-metrics">
+          <div class="as-metric"><div class="k">Active incidents</div>
+            <div class="v">1</div><div class="h">Demo case {INCIDENT_ID}</div></div>
+          <div class="as-metric"><div class="k">Under investigation</div>
+            <div class="v">1</div><div class="h">Open — analyst review required</div></div>
+          <div class="as-metric"><div class="k">Candidate vessels</div>
+            <div class="v">{n_cand}</div><div class="h">{ctx['n_high']} High · {ctx['n_med']} Medium (computed)</div></div>
+          <div class="as-metric"><div class="k">Latest satellite update</div>
+            <div class="v">{ctx['env']['detection_time_utc']}</div><div class="h">Synthetic scene timestamp</div></div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+    st.markdown(
+        """
+        <div class="as-flow">
+            <span>Observed spill</span><span class="arr">→</span>
+            <span>Reverse drift</span><span class="arr">→</span>
+            <span>Probable source zone</span><span class="arr">→</span>
+            <span>AIS correlation</span><span class="arr">→</span>
+            <span>Candidate vessel</span>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+    left, right = st.columns([1.15, 1], gap="large")
+    with left:
+        st.markdown('<div class="as-panel">', unsafe_allow_html=True)
+        st.markdown('<div class="as-h2">Current incident</div>', unsafe_allow_html=True)
+        st.markdown(
+            f"""
+            <table class="as-kv">
+              <tr><td class="k">Incident ID</td><td class="v">{INCIDENT_ID} <span class="as-demo-chip">DEMO</span></td></tr>
+              <tr><td class="k">Location</td><td class="v">{fmt_ll(ctx['spill_lat'], ctx['spill_lon'])}</td></tr>
+              <tr><td class="k">Estimated area</td><td class="v">{ctx['area_km2']:.2f} km²</td></tr>
+              <tr><td class="k">Source zone</td><td class="v">{ctx['zone_txt']}</td></tr>
+              <tr><td class="k">Investigation status</td><td class="v">Open — investigation review</td></tr>
+            </table>
+            """,
+            unsafe_allow_html=True,
+        )
+        if st.button("Open incident workspace", type="primary"):
+            st.session_state.page = "Incidents"
+            st.rerun()
+        st.markdown("</div>", unsafe_allow_html=True)
+    with right:
+        st.markdown('<div class="as-panel">', unsafe_allow_html=True)
+        st.markdown('<div class="as-h2">Top-ranked candidates</div>', unsafe_allow_html=True)
+        st.caption("Illustrative AIS tracks · ranking supports investigation review only")
+        top = ctx["scores"].head(4)
+        for _, r in top.iterrows():
+            st.markdown(
+                f"**{r['vessel_id']}** · overall {r['overall_score']:.3f} · {evidence_badge(r['evidence_level'])}",
+                unsafe_allow_html=True,
+            )
+        st.markdown("</div>", unsafe_allow_html=True)
+
+
+def page_incidents(ctx: dict) -> None:
+    st.markdown('<div class="as-h1">Incident workspace</div>', unsafe_allow_html=True)
+    st.markdown(
+        f'<p class="as-sub">{INCIDENT_ID} · Arabian Sea · synthetic demonstration case</p>',
+        unsafe_allow_html=True,
+    )
+    show_heat = render_backtrack_controls()
+    hours_back = int(st.session_state.hours_back)
+    # Controls sit above compute in main(); heatmap flag is local. Rebuild map here with flag.
+    left, right = st.columns([0.68, 0.32], gap="medium")
+    with left:
+        st.markdown('<div class="as-h2">Operational map</div>', unsafe_allow_html=True)
+        fmap = build_map(
+            poly_ll=ctx["poly_ll"],
+            particles=ctx["drift"]["positions"],
+            centroid=ctx["drift"]["centroid"],
+            radius_km=ctx["drift"]["radius_km"],
+            ais=ctx["ais"],
+            scores=ctx["scores"],
+            show_heat=show_heat,
+            spill_lat=ctx["spill_lat"],
+            spill_lon=ctx["spill_lon"],
+            selected_vessel=st.session_state.selected_vessel,
+        )
+        st_folium(fmap, width=None, height=640, returned_objects=[], key="incident_map")
+        st.caption(
+            f"Probable source zone: {ctx['zone_txt']}. Estimated source time window: {ctx['window_txt']} "
+            f"(detection minus backtracking window; not a precise release clock)."
+        )
+    with right:
+        st.markdown('<div class="as-panel">', unsafe_allow_html=True)
+        st.markdown('<div class="as-h2">Incident information</div>', unsafe_allow_html=True)
+        st.markdown(
+            f"""
+            <table class="as-kv">
+              <tr><td class="k">Incident ID</td><td class="v">{INCIDENT_ID}</td></tr>
+              <tr><td class="k">Detection time</td><td class="v">{ctx['env']['detection_time_utc']}</td></tr>
+              <tr><td class="k">Location</td><td class="v">{fmt_ll(ctx['spill_lat'], ctx['spill_lon'])}</td></tr>
+              <tr><td class="k">Estimated spill area</td><td class="v">{ctx['area_km2']:.2f} km²</td></tr>
+              <tr><td class="k">Detection confidence</td><td class="v">N/A (static sample)</td></tr>
+              <tr><td class="k">Source time window</td><td class="v">{ctx['window_txt']}</td></tr>
+              <tr><td class="k">Source zone</td><td class="v">{ctx['zone_txt']}</td></tr>
+              <tr><td class="k">Investigation status</td><td class="v">Open — investigation review</td></tr>
+            </table>
+            """,
+            unsafe_allow_html=True,
+        )
+        st.caption("DEMO / SYNTHETIC inputs. Candidate ranking does not assign legal responsibility.")
+        st.markdown("</div>", unsafe_allow_html=True)
+        st.markdown('<div class="as-h2" style="margin-top:12px;">Candidate vessels</div>', unsafe_allow_html=True)
+        st.caption("Illustrative AIS tracks")
+        for _, r in ctx["scores"].iterrows():
+            mark = " · selected" if r["vessel_id"] == st.session_state.selected_vessel else ""
+            st.markdown(
+                f"`{r['vessel_id']}` {evidence_badge(r['evidence_level'])} · {r['overall_score']:.3f}{mark}",
+                unsafe_allow_html=True,
+            )
+        st.selectbox("Focus candidate vessel", options=ctx["ids"], key="selected_vessel")
+    _ = hours_back
+
+
+def page_vessels(ctx: dict) -> None:
+    st.markdown('<div class="as-h1">Candidate vessels</div>', unsafe_allow_html=True)
+    st.markdown(
+        '<p class="as-sub">Evidence levels support investigation review. They do not identify a legally responsible vessel.</p>',
+        unsafe_allow_html=True,
+    )
+    st.caption("Illustrative AIS tracks · DEMO / SYNTHETIC")
+    rows = []
+    for _, r in ctx["scores"].iterrows():
+        track = ctx["ais"][ctx["ais"]["vessel_id"] == r["vessel_id"]]
+        env_s = environmental_consistency(track, ctx["drift"], ctx["det"], ctx["hours_back"])
+        rows.append(
+            {
+                "Candidate vessel": r["vessel_id"],
+                "Spatial compatibility": r["spatial_score"],
+                "Temporal compatibility": r["temporal_score"],
+                "Trajectory consistency": r["course_score"],
+                "Behavioural evidence": env_s,
+                "Overall score": r["overall_score"],
+                "Evidence level": r["evidence_level"],
+                "Investigation review": "Required" if r["evidence_level"] in ("High", "Medium") else "Optional",
+            }
+        )
+    st.dataframe(pd.DataFrame(rows), hide_index=True, use_container_width=True)
+    st.selectbox("Focus candidate vessel", options=ctx["ids"], key="selected_vessel")
+    sel = ctx["scores"][ctx["scores"]["vessel_id"] == st.session_state.selected_vessel].iloc[0]
+    st.markdown(
+        f"**{sel['vessel_id']}** · evidence level {evidence_badge(sel['evidence_level'])} · "
+        f"overall {sel['overall_score']:.3f} · investigation review",
+        unsafe_allow_html=True,
+    )
+
+
+def page_analytics(ctx: dict) -> None:
+    st.markdown('<div class="as-h1">Analytics</div>', unsafe_allow_html=True)
+    st.markdown(
+        '<p class="as-sub">Computed component scores for the selected candidate. Weights are equal and illustrative.</p>',
+        unsafe_allow_html=True,
+    )
+    st.selectbox("Candidate vessel", options=ctx["ids"], key="selected_vessel")
+    sel = ctx["scores"][ctx["scores"]["vessel_id"] == st.session_state.selected_vessel].iloc[0]
+    track = ctx["ais"][ctx["ais"]["vessel_id"] == sel["vessel_id"]]
+    env_score = environmental_consistency(track, ctx["drift"], ctx["det"], ctx["hours_back"])
+
+    c1, c2 = st.columns(2, gap="large")
+    with c1:
+        fig = go.Figure(
+            go.Bar(
+                x=[sel["spatial_score"], sel["temporal_score"], sel["course_score"], env_score],
+                y=["Spatial", "Temporal", "Trajectory", "Environmental (diagnostic)"],
+                orientation="h",
+                marker_color=["#1d4ed8", "#0f766e", "#b45309", "#64748b"],
+                text=[
+                    f"{sel['spatial_score']:.3f}",
+                    f"{sel['temporal_score']:.3f}",
+                    f"{sel['course_score']:.3f}",
+                    f"{env_score:.3f}",
+                ],
+                textposition="outside",
+            )
+        )
+        fig.update_layout(
+            template="plotly_white",
+            height=280,
+            margin=dict(l=10, r=48, t=8, b=8),
+            xaxis=dict(range=[0, 1.15], title="Score (0–1)", gridcolor="#f3f4f6"),
+            yaxis=dict(autorange="reversed"),
+            font=dict(color="#1f2937", size=12),
+            showlegend=False,
+            paper_bgcolor="#ffffff",
+            plot_bgcolor="#ffffff",
+        )
+        st.plotly_chart(fig, use_container_width=True)
+        st.caption(
+            "Overall evidence is the mean of spatial, temporal, and course. "
+            "Environmental consistency is a diagnostic from the scenario current/wind; it is not a fourth overall weight."
+        )
+    with c2:
+        fig2 = go.Figure(
+            go.Bar(
+                x=ctx["scores"]["vessel_id"],
+                y=ctx["scores"]["overall_score"],
+                marker_color=["#c2410c" if lv == "High" else "#b45309" if lv == "Medium" else "#94a3b8" for lv in ctx["scores"]["evidence_level"]],
+            )
+        )
+        fig2.update_layout(
+            template="plotly_white",
+            height=280,
+            margin=dict(l=10, r=10, t=8, b=8),
+            yaxis=dict(range=[0, 1], title="Overall score", gridcolor="#f3f4f6"),
+            xaxis_title="Candidate vessel",
+            paper_bgcolor="#ffffff",
+            plot_bgcolor="#ffffff",
+            font=dict(color="#1f2937", size=12),
+        )
+        st.plotly_chart(fig2, use_container_width=True)
+        st.caption("Overall scores across all illustrative AIS tracks.")
+    st.markdown(
+        f"**{sel['vessel_id']}** · overall {sel['overall_score']:.3f} · {evidence_badge(sel['evidence_level'])} · investigation review",
+        unsafe_allow_html=True,
+    )
+
+
+def page_evidence(ctx: dict) -> None:
+    st.markdown('<div class="as-h1">Evidence</div>', unsafe_allow_html=True)
+    st.markdown(
+        '<p class="as-sub">Structured view of the same computed products: satellite sample, reverse drift, AIS correlation, and timeline.</p>',
+        unsafe_allow_html=True,
+    )
+    sat, drift_t, ais_t, time_t = st.tabs(["Satellite", "Drift analysis", "AIS correlation", "Timeline"])
+    with sat:
+        st.caption("Synthetic SAR-like scene · mask is a static sample, not model inference")
+        c1, c2 = st.columns(2)
+        overlay = overlay_slick(ctx["spill_img"], ctx["poly_meta"]["polygon_pixels"])
+        with c1:
+            st.image(ctx["spill_img"], caption="Original scene (synthetic)", use_container_width=True)
+        with c2:
+            st.image(overlay, caption="Detected spill outline (static mask)", use_container_width=True)
+        st.markdown(
+            f"Estimated area **{ctx['area_km2']:.2f} km²** · detection confidence **N/A (static sample)**"
+        )
+    with drift_t:
+        st.caption("Reverse Lagrangian ensemble using the scenario current and wind vectors")
+        fmap = build_map(
+            poly_ll=ctx["poly_ll"],
+            particles=ctx["drift"]["positions"],
+            centroid=ctx["drift"]["centroid"],
+            radius_km=ctx["drift"]["radius_km"],
+            ais=ctx["ais"],
+            scores=ctx["scores"],
+            show_heat=True,
+            spill_lat=ctx["spill_lat"],
+            spill_lon=ctx["spill_lon"],
+            selected_vessel=st.session_state.selected_vessel,
+        )
+        st_folium(fmap, width=None, height=520, returned_objects=[], key="evidence_map")
+        st.caption(
+            f"Source zone {ctx['zone_txt']} · window {ctx['window_txt']} · "
+            f"current {ctx['env']['current']['speed_ms']} m/s toward {ctx['env']['current']['direction_deg_toward']}° · "
+            f"wind {ctx['env']['wind']['speed_ms']} m/s toward {ctx['env']['wind']['direction_deg_toward']}°"
+        )
+    with ais_t:
+        st.caption("Vessel trajectories relative to the inferred source area and time window")
+        st.dataframe(
+            ctx["scores"][
+                ["vessel_id", "spatial_score", "temporal_score", "course_score", "overall_score", "evidence_level"]
+            ].rename(
+                columns={
+                    "vessel_id": "Candidate vessel",
+                    "spatial_score": "Spatial",
+                    "temporal_score": "Temporal",
+                    "course_score": "Trajectory",
+                    "overall_score": "Overall",
+                    "evidence_level": "Evidence level",
+                }
+            ),
+            hide_index=True,
+            use_container_width=True,
+        )
+        st.selectbox("Focus candidate vessel", options=ctx["ids"], key="selected_vessel")
+    with time_t:
+        st.markdown(
+            f"""
+            1. **Spill detection** — {ctx['env']['detection_time_utc']} at {fmt_ll(ctx['spill_lat'], ctx['spill_lon'])} (synthetic scene).
+            2. **Source reconstruction** — reverse drift over **{ctx['hours_back']} h** → zone {ctx['zone_txt']}.
+            3. **Estimated source time window** — {ctx['window_txt']}.
+            4. **AIS correlation** — {len(ctx['scores'])} illustrative tracks scored (spatial, temporal, course).
+            5. **Investigation review** — {ctx['n_high']} High and {ctx['n_med']} Medium candidates queued for the analyst.
+            """
+        )
+
+    st.markdown('<div class="as-h2">Evidence summary</div>', unsafe_allow_html=True)
+    top = ctx["scores"].iloc[0]
+    st.markdown(
+        f"Lead candidate for review: **{top['vessel_id']}** · {evidence_badge(top['evidence_level'])} · "
+        f"overall {top['overall_score']:.3f}. Ranking supports investigation; it does not determine legal responsibility.",
+        unsafe_allow_html=True,
+    )
+    if st.button("Export investigation report", type="primary"):
+        st.session_state.show_report = True
+    if st.session_state.show_report:
+        render_report(ctx)
+
+
+def page_about() -> None:
+    st.markdown('<div class="as-h1">About Aapda Setu</div>', unsafe_allow_html=True)
+    st.markdown(
+        '<p class="as-sub">Smart India Hackathon problem statement SIH26143 — oil spill source investigation prototype.</p>',
+        unsafe_allow_html=True,
+    )
+    st.markdown(
+        """
+        **Implemented workflow**
+
+        Satellite scene → spill polygon → reverse-drift ensemble → AIS correlation → ranked evidence → human review.
+
+        **Real in this prototype**
+
+        - Reverse-drift mathematics and the spatial / temporal / course scoring formulas
+        - Map layers and the investigation report assembled from those computed values
+
+        **Simulated for demonstration**
+
+        - SAR image (not a Sentinel-1 product)
+        - AIS tracks (illustrative, not a live feed)
+        - Environment vectors (single current/wind case, not an ocean-model hindcast)
+        - Spill mask (pre-drawn; confidence is N/A)
+
+        Candidate generation supports investigation; final determination remains with the human analyst.
+        """
     )
 
 
 def main() -> None:
     st.set_page_config(
-        page_title="AAPDA SETU — Oil Spill Source Investigation",
+        page_title="Aapda Setu — Marine Oil Spill Intelligence",
         layout="wide",
         initial_sidebar_state="collapsed",
     )
     st.markdown(CSS, unsafe_allow_html=True)
+
+    if "page" not in st.session_state:
+        st.session_state.page = "Incidents"
+    if "hours_back" not in st.session_state:
+        st.session_state.hours_back = 8
+    if "show_report" not in st.session_state:
+        st.session_state.show_report = False
+
+    render_nav(st.session_state.page)
 
     scenario = load_scenario()
     spill_img, _mask_img = load_images()
@@ -411,69 +850,6 @@ def main() -> None:
     spill_lat = float(env["spill_lat"])
     spill_lon = float(env["spill_lon"])
     area_km2 = polygon_area_km2(poly_ll)
-
-    if "hours_back" not in st.session_state:
-        st.session_state.hours_back = 8
-    if "show_report" not in st.session_state:
-        st.session_state.show_report = False
-
-    st.markdown(
-        f"""
-        <div class="as-top">
-          <div>
-            <div class="as-brand">AAPDA SETU</div>
-            <div class="as-title">Oil Spill Source Investigation</div>
-            <div class="as-sub">Satellite–AIS Intelligence for Oil Spill Source Investigation</div>
-            <div class="as-sub" style="margin-top:2px;">SIH26143 · Arabian Sea demonstration case</div>
-          </div>
-          <div class="as-demo">
-            <b>DEMO DATA</b><br/>
-            This prototype uses synthetic SAR and illustrative AIS data for demonstration.
-          </div>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
-    st.markdown(
-        """
-        <div class="as-flow">
-            <span>SATELLITE</span><span class="arr">→</span>
-            <span>SPILL DETECTION</span><span class="arr">→</span>
-            <span>REVERSE DRIFT</span><span class="arr">→</span>
-            <span>AIS CORRELATION</span><span class="arr">→</span>
-            <span>EVIDENCE</span><span class="arr">→</span>
-            <span>HUMAN REVIEW</span>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
-    ctrl_a, ctrl_b, ctrl_c = st.columns([1.6, 2.2, 1.0])
-    with ctrl_a:
-        st.markdown('<div class="as-panel-label">BACKTRACKING WINDOW</div>', unsafe_allow_html=True)
-        preset_cols = st.columns(len(PRESET_HOURS))
-        for h, col in zip(PRESET_HOURS, preset_cols):
-            if col.button(
-                f"{h}h",
-                key=f"preset_{h}",
-                use_container_width=True,
-                type="primary" if st.session_state.hours_back == h else "secondary",
-            ):
-                st.session_state.hours_back = h
-                st.rerun()
-    with ctrl_b:
-        st.slider(
-            "Fine adjust (hours)",
-            min_value=3,
-            max_value=24,
-            step=1,
-            key="hours_back",
-        )
-    with ctrl_c:
-        st.write("")
-        show_heat = st.checkbox("Particle heatmap", value=True)
-
     hours_back = int(st.session_state.hours_back)
 
     drift = backtrack(
@@ -494,222 +870,49 @@ def main() -> None:
         detection_time=det,
         hours_back=hours_back,
     )
-
-    n_high = int((scores["evidence_level"] == "High").sum())
-    n_med = int((scores["evidence_level"] == "Medium").sum())
-    clat, clon = drift["centroid"]
-    zone_txt = f"{fmt_ll(clat, clon)} · ~{drift['radius_km']:.1f} km"
-    window_txt = source_time_window(det, hours_back)
-
-    st.markdown(
-        f"""
-        <div class="as-metrics">
-          <div class="as-metric">
-            <div class="k">DETECTED SLICK</div>
-            <div class="v">{area_km2:.2f} km²</div>
-            <div class="h">{fmt_ll(spill_lat, spill_lon)}</div>
-          </div>
-          <div class="as-metric">
-            <div class="k">DETECTION TIME</div>
-            <div class="v">{env['detection_time_utc']}</div>
-            <div class="h">Mask confidence: N/A (static sample)</div>
-          </div>
-          <div class="as-metric">
-            <div class="k">PROBABLE SOURCE ZONE</div>
-            <div class="v">~{drift['radius_km']:.1f} km RMS</div>
-            <div class="h">{fmt_ll(clat, clon)}</div>
-          </div>
-          <div class="as-metric">
-            <div class="k">CANDIDATE VESSELS</div>
-            <div class="v">{n_high} High · {n_med} Medium</div>
-            <div class="h">{len(scores)} AIS tracks ranked</div>
-          </div>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
     ids = scores["vessel_id"].tolist()
     if "selected_vessel" not in st.session_state or st.session_state.selected_vessel not in ids:
         st.session_state.selected_vessel = ids[0]
 
-    left, right = st.columns([0.68, 0.32], gap="medium")
-    with left:
-        st.markdown('<div class="as-panel-label">INCIDENT MAP</div>', unsafe_allow_html=True)
-        fmap = build_map(
-            poly_ll=poly_ll,
-            particles=drift["positions"],
-            centroid=drift["centroid"],
-            radius_km=drift["radius_km"],
-            ais=ais,
-            scores=scores,
-            show_heat=show_heat,
-            spill_lat=spill_lat,
-            spill_lon=spill_lon,
-            selected_vessel=st.session_state.selected_vessel,
-        )
-        st_folium(fmap, width=None, height=680, returned_objects=[], key="incident_map")
-        st.markdown(
-            f'<div class="as-note">Probable source zone: {zone_txt}<br/>'
-            f"Estimated source time window: {window_txt} "
-            f"(detection time minus backtracking window; not a precise release clock)</div>",
-            unsafe_allow_html=True,
-        )
+    clat, clon = drift["centroid"]
+    ctx = {
+        "poly_meta": poly_meta,
+        "env": env,
+        "ais": ais,
+        "poly_ll": poly_ll,
+        "det": det,
+        "spill_lat": spill_lat,
+        "spill_lon": spill_lon,
+        "area_km2": area_km2,
+        "hours_back": hours_back,
+        "drift": drift,
+        "scores": scores,
+        "ids": ids,
+        "n_high": int((scores["evidence_level"] == "High").sum()),
+        "n_med": int((scores["evidence_level"] == "Medium").sum()),
+        "zone_txt": f"{fmt_ll(clat, clon)} · ~{drift['radius_km']:.1f} km",
+        "window_txt": source_time_window(det, hours_back),
+        "spill_img": spill_img,
+    }
 
-    with right:
-        st.markdown('<div class="as-panel-label">AIS CORRELATION</div>', unsafe_allow_html=True)
-        st.caption("Illustrative AIS tracks")
-
-        table_html = [
-            "<table style='width:100%;border-collapse:collapse;font-size:0.82rem;'>",
-            "<tr style='color:#7ad4cc;letter-spacing:0.06em;font-size:0.7rem;'>",
-            "<th align='left'>Candidate Vessel</th><th>Spatial</th><th>Temporal</th>"
-            "<th>Course</th><th align='left'>Evidence</th></tr>",
-        ]
-        for _, r in scores.iterrows():
-            hl = "background:#163044;" if r["vessel_id"] == st.session_state.selected_vessel else ""
-            table_html.append(
-                f"<tr style='{hl}border-top:1px solid #1e3a52;'>"
-                f"<td style='padding:6px 4px;font-weight:600;'>{r['vessel_id']}</td>"
-                f"<td align='center'>{r['spatial_score']:.3f}</td>"
-                f"<td align='center'>{r['temporal_score']:.3f}</td>"
-                f"<td align='center'>{r['course_score']:.3f}</td>"
-                f"<td style='padding:6px 4px;'>{evidence_badge(r['evidence_level'])}</td>"
-                f"</tr>"
-            )
-        table_html.append("</table>")
-        st.markdown("".join(table_html), unsafe_allow_html=True)
-
-        st.selectbox(
-            "Selected vessel",
-            options=ids,
-            key="selected_vessel",
-        )
-
-        sel = scores[scores["vessel_id"] == st.session_state.selected_vessel].iloc[0]
-        track = ais[ais["vessel_id"] == sel["vessel_id"]]
-        env_score = environmental_consistency(track, drift, det, hours_back)
-
-        st.markdown('<div class="as-panel-label" style="margin-top:12px;">EVIDENCE BREAKDOWN</div>', unsafe_allow_html=True)
-        st.markdown(
-            f"**{sel['vessel_id']}** · overall {sel['overall_score']:.3f} · {evidence_badge(sel['evidence_level'])}",
-            unsafe_allow_html=True,
-        )
-        st.caption(
-            "Overall evidence is the equal-weight mean of spatial, temporal, and course. "
-            "Environmental consistency is a diagnostic from the same current/wind vectors; "
-            "it is not a fourth weight in the overall score."
-        )
-
-        breakdown = pd.DataFrame(
-            {
-                "component": [
-                    "Spatial match",
-                    "Temporal match",
-                    "Course / trajectory match",
-                    "Environmental consistency",
-                ],
-                "score": [
-                    sel["spatial_score"],
-                    sel["temporal_score"],
-                    sel["course_score"],
-                    env_score,
-                ],
-            }
-        )
-        fig = go.Figure(
-            go.Bar(
-                x=breakdown["score"],
-                y=breakdown["component"],
-                orientation="h",
-                marker_color=["#2aa9a1", "#5b8fb8", "#c9a227", "#7ad4cc"],
-                text=[f"{v:.3f}" for v in breakdown["score"]],
-                textposition="outside",
-            )
-        )
-        fig.update_layout(
-            template="plotly_dark",
-            paper_bgcolor="#12283c",
-            plot_bgcolor="#12283c",
-            height=230,
-            margin=dict(l=10, r=40, t=8, b=8),
-            xaxis=dict(range=[0, 1.15], title="Score (0–1)", gridcolor="#1e3a52"),
-            yaxis=dict(autorange="reversed"),
-            font=dict(color="#e8eef4", size=12),
-            showlegend=False,
-        )
-        st.plotly_chart(fig, use_container_width=True)
-        st.markdown(
-            f"**Overall evidence level:** {evidence_badge(sel['evidence_level'])} "
-            f"(computed {sel['overall_score']:.3f})",
-            unsafe_allow_html=True,
-        )
-        st.caption(
-            f"Scenario current {env['current']['speed_ms']} m/s toward "
-            f"{env['current']['direction_deg_toward']}° · wind "
-            f"{env['wind']['speed_ms']} m/s toward {env['wind']['direction_deg_toward']}° · windage 3%."
-        )
-
-        if st.button("GENERATE INVESTIGATION REPORT", use_container_width=True):
-            st.session_state.show_report = True
-
-    with st.expander("Synthetic SAR scene (not a live Sentinel-1 product)", expanded=False):
-        c1, c2 = st.columns(2)
-        overlay = overlay_slick(spill_img, poly_meta["polygon_pixels"])
-        with c1:
-            st.image(spill_img, caption="Synthetic SAR-like scene", use_container_width=True)
-        with c2:
-            st.image(overlay, caption="Mask outline (static sample)", use_container_width=True)
-
-    if st.session_state.show_report:
-        high_ids = ", ".join(scores.loc[scores["evidence_level"] == "High", "vessel_id"].tolist()) or "None"
-        med_ids = ", ".join(scores.loc[scores["evidence_level"] == "Medium", "vessel_id"].tolist()) or "None"
-        summary_bits = []
-        for _, r in scores.head(3).iterrows():
-            summary_bits.append(
-                f"{r['vessel_id']} {r['evidence_level']} "
-                f"(spatial {r['spatial_score']:.3f}, temporal {r['temporal_score']:.3f}, "
-                f"course {r['course_score']:.3f}, overall {r['overall_score']:.3f})"
-            )
-        st.markdown(
-            f"""
-            <div class="as-report">
-              <h3>Investigation report</h3>
-              <table>
-                <tr><td class="k">Incident</td>
-                    <td class="v">Arabian Sea slick · AAPDA SETU demonstration case (SIH26143)</td></tr>
-                <tr><td class="k">Detection Time</td>
-                    <td class="v">{env['detection_time_utc']}</td></tr>
-                <tr><td class="k">Spill Location</td>
-                    <td class="v">{fmt_ll(spill_lat, spill_lon)}</td></tr>
-                <tr><td class="k">Spill Confidence</td>
-                    <td class="v">N/A (static sample mask — not model-inferred)</td></tr>
-                <tr><td class="k">Backtracking Window</td>
-                    <td class="v">{hours_back} hours</td></tr>
-                <tr><td class="k">Probable Source Zone</td>
-                    <td class="v">{zone_txt} (ensemble centroid and RMS radius)</td></tr>
-                <tr><td class="k">Estimated Source Time Window</td>
-                    <td class="v">{window_txt}</td></tr>
-                <tr><td class="k">Candidate Vessels</td>
-                    <td class="v">High: {high_ids}<br/>Medium: {med_ids}<br/>Tracks ranked: {', '.join(ids)}</td></tr>
-                <tr><td class="k">Evidence Summary</td>
-                    <td class="v">{"<br/>".join(summary_bits)}</td></tr>
-                <tr><td class="k">Investigation Status</td>
-                    <td class="v">Open — candidate generation complete; analyst review required</td></tr>
-              </table>
-              <p style="color:#9bb0c3;font-size:0.85rem;margin:12px 0 0 0;">
-                Candidate generation supports investigation; final determination remains with the human analyst.
-              </p>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
+    page = st.session_state.page
+    if page == "Dashboard":
+        page_dashboard(ctx)
+    elif page == "Incidents":
+        page_incidents(ctx)
+    elif page == "Vessels":
+        page_vessels(ctx)
+    elif page == "Analytics":
+        page_analytics(ctx)
+    elif page == "Evidence":
+        page_evidence(ctx)
+    else:
+        page_about()
 
     st.markdown(
         '<p class="as-foot">'
-        "This prototype uses synthetic SAR and illustrative AIS data for demonstration. "
-        "Not a trained production model. Candidate ranking supports investigation; "
-        "it does not determine legal responsibility."
+        "DEMO / SYNTHETIC — synthetic SAR and illustrative AIS. Not a trained production model. "
+        "Candidate ranking supports investigation; it does not determine legal responsibility."
         "</p>",
         unsafe_allow_html=True,
     )
