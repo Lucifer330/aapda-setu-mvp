@@ -12,13 +12,8 @@ import json
 import math
 import sys
 from datetime import datetime, timedelta, timezone
-from io import BytesIO
 from pathlib import Path
 
-import matplotlib
-
-matplotlib.use("Agg")
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
@@ -198,19 +193,18 @@ def polygon_area_km2(ring: list[tuple[float, float]]) -> float:
 
 
 def overlay_slick(spill: Image.Image, polygon_pixels: list) -> Image.Image:
-    gray = np.asarray(spill.convert("L"), dtype=float)
-    fig, ax = plt.subplots(figsize=(5.2, 5.2), dpi=110)
-    ax.imshow(gray, cmap="gray", origin="upper")
-    xs = [p[0] for p in polygon_pixels] + [polygon_pixels[0][0]]
-    ys = [p[1] for p in polygon_pixels] + [polygon_pixels[0][1]]
-    ax.plot(xs, ys, color="#c2410c", linewidth=2.2)
-    ax.set_axis_off()
-    fig.tight_layout(pad=0)
-    bio = BytesIO()
-    fig.savefig(bio, format="png", bbox_inches="tight", pad_inches=0, facecolor="white")
-    plt.close(fig)
-    bio.seek(0)
-    return Image.open(bio).convert("RGB")
+    """Draw the demo spill outline with Pillow."""
+    img = spill.convert("RGB")
+    from PIL import ImageDraw
+
+    draw = ImageDraw.Draw(img)
+    pts = [(float(p[0]), float(p[1])) for p in polygon_pixels]
+    if not pts:
+        return img
+    if pts[0] != pts[-1]:
+        pts = pts + [pts[0]]
+    draw.line(pts, fill=(194, 65, 12), width=3)
+    return img
 
 
 def detection_dt(env: dict) -> datetime:
