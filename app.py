@@ -898,10 +898,6 @@ def page_about() -> None:
     )
     st.markdown(
         """
-        ### About Aapda Setu
-
-        Smart India Hackathon problem statement SIH26143 — marine oil spill source investigation prototype.
-
         ### Implemented workflow
 
         DETECT (scene → demo spill segmentation) → TRACE (reverse-drift ensemble) → CORRELATE (historical AIS) → RANK (evidence scores) → REVIEW (human analyst).
